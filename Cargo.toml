@@ -1,0 +1,36 @@
+[package]
+name = "spotify-lyrics"
+description = "Spotify Lyrics API Wrapper"
+version = "0.0.0"
+authors = ["Shayne Hartford <shaybox@shaybox.com>"]
+edition = "2021"
+readme = "README.md"
+repository = "https://github.com/ShayBox/Spotify-Lyrics"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+lazy_static = "1"
+maybe-async = "0.2"
+reqwest = { version = "0.11", default-features = false, features = ["cookies", "json"] }
+rookie = { version = "0.3", optional = true }
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+url = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt"] }
+
+[features]
+default = ["browser", "rustls-tls"]
+browser = ["dep:rookie"]
+is_sync = ["maybe-async/is_sync", "reqwest/blocking"]
+native-tls = ["reqwest/native-tls"]
+rustls-tls = ["reqwest/rustls-tls"]
+
+[[example]]
+name = "sync"
+required-features = ["is_sync"]
