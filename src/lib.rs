@@ -43,41 +43,32 @@ pub enum Browser {
 }
 
 #[derive(Debug, Default)]
-pub struct SpotifyLyricsBuilder {
-    cookie: String,
+pub struct SpotifyLyrics {
+    auth:   Authorization,
     client: Client,
-    jar:    Arc<Jar>,
 }
 
-impl SpotifyLyricsBuilder {
-    pub fn new() -> Result<Self> {
+impl SpotifyLyrics {
+    /// Manually supply your own cookie
+    pub fn from_cookie(cookie: &str) -> Result<Self> {
         let jar = Arc::new(Jar::default());
+        jar.add_cookie_str(cookie, &COOKIE_URL);
+
         let client = Client::builder()
             .cookie_store(true)
-            .cookie_provider(jar.clone())
+            .cookie_provider(jar)
             .user_agent(USER_AGENT)
             .build()?;
 
-        Ok(SpotifyLyricsBuilder {
+        Ok(Self {
             client,
-            jar,
             ..Default::default()
         })
     }
 
-    /// Manually supply your own cookie
-    /// Optional - Spotify allows anonymous access tokens (default)
-    pub fn cookie(mut self, cookie: String) -> Result<Self> {
-        self.jar.add_cookie_str(&cookie, &COOKIE_URL);
-        self.cookie = cookie;
-
-        Ok(self)
-    }
-
     /// Try to get the cookie from the users web browser
-    /// Optional - Spotify allows anonymous access tokens (default)
     #[cfg(feature = "browser")]
-    pub fn browser(self, browser: Browser) -> Result<Self> {
+    pub fn from_browser(browser: Browser) -> Result<Self> {
         use rookie::common::enums::CookieToString;
 
         let get_cookies = match browser {
@@ -104,36 +95,13 @@ impl SpotifyLyricsBuilder {
             .collect::<Vec<_>>()
             .to_string();
 
-        self.cookie(cookie)
-    }
-
-    pub async fn build(self) -> Result<SpotifyLyrics> {
-        let mut spotify_lyrics = SpotifyLyrics {
-            client: self.client,
-            ..Default::default()
-        };
-
-        spotify_lyrics.refresh_authorization().await?;
-
-        Ok(spotify_lyrics)
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct SpotifyLyrics {
-    client:        Client,
-    authorization: Authorization,
-}
-
-impl SpotifyLyrics {
-    pub fn builder() -> Result<SpotifyLyricsBuilder> {
-        SpotifyLyricsBuilder::new()
+        Self::from_cookie(&cookie)
     }
 
     #[maybe_async::maybe_async]
     pub async fn refresh_authorization(&mut self) -> Result<()> {
         let response = self.client.get(TOKEN_URL).send().await?;
-        self.authorization = response.json().await?;
+        self.auth = response.json().await?;
 
         Ok(())
     }
@@ -141,13 +109,13 @@ impl SpotifyLyrics {
     #[maybe_async::maybe_async]
     pub async fn get_authorization(&mut self) -> Result<Authorization> {
         let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?;
-        let expiration = Duration::from_millis(self.authorization.expiration_timestamp_ms);
+        let expiration = Duration::from_millis(self.auth.expiration_timestamp_ms);
         if current_time > expiration {
             info!("Refreshing authorization");
             self.refresh_authorization().await?;
         };
 
-        Ok(self.authorization.clone())
+        Ok(self.auth.clone())
     }
 
     #[maybe_async::maybe_async]
