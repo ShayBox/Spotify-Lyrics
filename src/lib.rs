@@ -78,7 +78,7 @@ impl SpotifyLyricsBuilder {
     /// Optional - Spotify allows anonymous access tokens (default)
     #[cfg(feature = "browser")]
     pub fn browser(self, browser: Browser) -> Result<Self> {
-        use rookie::CookieToString;
+        use rookie::common::enums::CookieToString;
 
         let get_cookies = match browser {
             Browser::All => rookie::load,
@@ -97,10 +97,7 @@ impl SpotifyLyricsBuilder {
         };
 
         let domains = Some(vec![COOKIE_DOMAIN]);
-        let Ok(cookies) = get_cookies(domains) else {
-            bail!("Couldn't find any cookies in {browser:?} browser")
-        };
-
+        let cookies = get_cookies(domains)?;
         let cookie = cookies
             .into_iter()
             .filter(|cookie| cookie.name == COOKIE_NAME)
