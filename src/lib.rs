@@ -10,6 +10,7 @@ use reqwest::cookie::Jar;
 #[cfg(not(feature = "is_sync"))]
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use tracing::info;
 use url::Url;
 
@@ -177,12 +178,15 @@ pub struct Lyrics {
     pub show_upsell: bool,
 }
 
+#[serde_as]
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Line {
+    #[serde_as(as = "DisplayFromStr")]
     pub start_time_ms: u64,
     pub words:         String,
     // pub syllables: Vec<Value>,
+    #[serde_as(as = "DisplayFromStr")]
     pub end_time_ms:   u64,
 }
 
