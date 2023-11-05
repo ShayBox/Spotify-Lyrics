@@ -109,7 +109,7 @@ impl SpotifyLyrics {
     #[maybe_async::maybe_async]
     pub async fn get_authorization(&mut self) -> Result<Authorization> {
         let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?;
-        let expiration = Duration::from_millis(self.auth.expiration_timestamp_ms);
+        let expiration = Duration::from_millis(self.auth.expiration_ms);
         if current_time > expiration {
             info!("Refreshing authorization");
             self.refresh_authorization().await?;
@@ -145,11 +145,11 @@ impl SpotifyLyrics {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Authorization {
-    pub client_id: String,
-    pub access_token: String,
+    pub client_id:     String,
+    pub access_token:  String,
     #[serde(rename = "accessTokenExpirationTimestampMs")]
-    pub expiration_timestamp_ms: u64,
-    pub is_anonymous: bool,
+    pub expiration_ms: u64,
+    pub is_anonymous:  bool,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -180,10 +180,10 @@ pub struct Lyrics {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Line {
-    pub start_time_ms: String,
+    pub start_time_ms: u64,
     pub words:         String,
     // pub syllables: Vec<Value>,
-    pub end_time_ms:   String,
+    pub end_time_ms:   u64,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
