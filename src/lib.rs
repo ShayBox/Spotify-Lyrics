@@ -34,6 +34,7 @@ pub enum Browser {
     Chromium,
     Edge,
     Firefox,
+    #[cfg(target_os = "windows")]
     InternetExplorer,
     LibreWolf,
     Opera,
@@ -79,6 +80,7 @@ impl SpotifyLyrics {
             Browser::Chromium => rookie::chromium,
             Browser::Edge => rookie::edge,
             Browser::Firefox => rookie::firefox,
+            #[cfg(target_os = "windows")]
             Browser::InternetExplorer => rookie::internet_explorer,
             Browser::LibreWolf => rookie::libre_wolf,
             Browser::Opera => rookie::opera,
@@ -143,7 +145,7 @@ impl SpotifyLyrics {
 
 /* Please feel free to create an issue or pull request to expand as needed */
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Authorization {
     pub client_id:     String,
@@ -153,7 +155,7 @@ pub struct Authorization {
     pub is_anonymous:  bool,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ColorLyrics {
     pub lyrics: Lyrics,
@@ -161,7 +163,7 @@ pub struct ColorLyrics {
     pub has_vocal_removal: bool,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Lyrics {
     pub sync_type: String,
@@ -179,7 +181,7 @@ pub struct Lyrics {
 }
 
 #[serde_as]
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Line {
     #[serde_as(as = "DisplayFromStr")]
@@ -190,7 +192,7 @@ pub struct Line {
     pub end_time_ms:   u64,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Colors {
     pub background:     i64,
