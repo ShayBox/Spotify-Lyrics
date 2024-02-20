@@ -44,7 +44,7 @@ pub enum Browser {
     Vivaldi,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct SpotifyLyrics {
     auth:   Authorization,
     client: Client,

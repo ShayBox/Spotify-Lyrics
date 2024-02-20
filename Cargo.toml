@@ -1,7 +1,7 @@
 [package]
 name = "spotify-lyrics"
 description = "Spotify Lyrics API Wrapper"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["Shayne Hartford <shaybox@shaybox.com>"]
 edition = "2021"
 readme = "README.md"
