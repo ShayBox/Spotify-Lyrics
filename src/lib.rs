@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate tracing;
+
 use std::{
     sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -11,14 +14,13 @@ use reqwest::cookie::Jar;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use tracing::info;
 use url::Url;
 
 const BASE_URL: &str = "https://spclient.wg.spotify.com";
 const COOKIE_DOMAIN: &str = ".spotify.com";
 const COOKIE_NAME: &str = "sp_dc";
 const TOKEN_URL: &str = "https://open.spotify.com/get_access_token";
-const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36";
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.3";
 /* ^ This could be fetched from a list at runtime but I don't suspect this will need to be changed ^ */
 
 lazy_static::lazy_static! {
@@ -30,6 +32,8 @@ lazy_static::lazy_static! {
 pub enum Browser {
     All,
     Brave,
+    #[cfg(target_os = "linux")]
+    Cachy,
     Chrome,
     Chromium,
     Edge,
@@ -76,13 +80,15 @@ impl SpotifyLyrics {
         let get_cookies = match browser {
             Browser::All => rookie::load,
             Browser::Brave => rookie::brave,
+            #[cfg(target_os = "linux")]
+            Browser::Cachy => rookie::cachy,
             Browser::Chrome => rookie::chrome,
             Browser::Chromium => rookie::chromium,
             Browser::Edge => rookie::edge,
             Browser::Firefox => rookie::firefox,
             #[cfg(target_os = "windows")]
             Browser::InternetExplorer => rookie::internet_explorer,
-            Browser::LibreWolf => rookie::libre_wolf,
+            Browser::LibreWolf => rookie::librewolf,
             Browser::Opera => rookie::opera,
             Browser::OperaGX => rookie::opera_gx,
             #[cfg(target_os = "macos")]
@@ -158,26 +164,26 @@ pub struct Authorization {
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ColorLyrics {
-    pub lyrics: Lyrics,
-    pub colors: Colors,
+    pub lyrics:            Lyrics,
+    pub colors:            Colors,
     pub has_vocal_removal: bool,
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Lyrics {
-    pub sync_type: String,
-    pub lines: Vec<Line>,
-    pub provider: String,
-    pub provider_lyrics_id: String,
+    pub sync_type:             String,
+    pub lines:                 Vec<Line>,
+    pub provider:              String,
+    pub provider_lyrics_id:    String,
     pub provider_display_name: String,
-    pub sync_lyrics_uri: String,
-    pub is_dense_typeface: bool,
-    // pub alternatives: Vec<Value>,
-    pub language: String,
-    pub is_rtl_language: bool,
-    pub fullscreen_action: String,
-    pub show_upsell: bool,
+    pub sync_lyrics_uri:       String,
+    pub is_dense_typeface:     bool,
+    pub alternatives:          Vec<String>,
+    pub language:              String,
+    pub is_rtl_language:       bool,
+    pub fullscreen_action:     String,
+    pub show_upsell:           bool,
 }
 
 #[serde_as]
@@ -187,7 +193,7 @@ pub struct Line {
     #[serde_as(as = "DisplayFromStr")]
     pub start_time_ms: u64,
     pub words:         String,
-    // pub syllables: Vec<Value>,
+    pub syllables:     Vec<String>,
     #[serde_as(as = "DisplayFromStr")]
     pub end_time_ms:   u64,
 }
