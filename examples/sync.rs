@@ -1,4 +1,4 @@
-use spotify_lyrics::SpotifyLyrics;
+use spotify_lyrics::{Browser, SpotifyLyrics};
 
 fn main() -> anyhow::Result<()> {
     // Anonymous - Can't get lyrics

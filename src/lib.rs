@@ -6,7 +6,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Error, Result};
 #[cfg(feature = "is_sync")]
 use reqwest::blocking::Client;
 use reqwest::cookie::Jar;
@@ -20,8 +20,8 @@ const BASE_URL: &str = "https://spclient.wg.spotify.com";
 const COOKIE_DOMAIN: &str = ".spotify.com";
 const COOKIE_NAME: &str = "sp_dc";
 const TOKEN_URL: &str = "https://open.spotify.com/get_access_token";
-const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.3";
-/* ^ This could be fetched from a list at runtime but I don't suspect this will need to be changed ^ */
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36";
+/* ^ This could be fetched from a list at runtime, but I don't suspect this will need to be changed ^ */
 
 lazy_static::lazy_static! {
     static ref COOKIE_URL: Url = format!("https://open{COOKIE_DOMAIN}").parse().unwrap();
@@ -31,6 +31,7 @@ lazy_static::lazy_static! {
 #[derive(Debug)]
 pub enum Browser {
     All,
+    Arc,
     Brave,
     #[cfg(target_os = "linux")]
     Cachy,
@@ -41,11 +42,14 @@ pub enum Browser {
     #[cfg(target_os = "windows")]
     InternetExplorer,
     LibreWolf,
+    #[cfg(target_os = "windows")]
+    Octo,
     Opera,
     OperaGX,
     #[cfg(target_os = "macos")]
     Safari,
     Vivaldi,
+    Zen,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -75,29 +79,33 @@ impl SpotifyLyrics {
     /// Try to get the cookie from the users web browser
     #[cfg(feature = "browser")]
     pub fn from_browser(browser: Browser) -> Result<Self> {
-        use rookie::common::enums::CookieToString;
+        use pookie::common::enums::CookieToString;
 
         let get_cookies = match browser {
-            Browser::All => rookie::load,
-            Browser::Brave => rookie::brave,
+            Browser::All => pookie::load,
+            Browser::Arc => pookie::arc,
+            Browser::Brave => pookie::brave,
             #[cfg(target_os = "linux")]
-            Browser::Cachy => rookie::cachy,
-            Browser::Chrome => rookie::chrome,
-            Browser::Chromium => rookie::chromium,
-            Browser::Edge => rookie::edge,
-            Browser::Firefox => rookie::firefox,
+            Browser::Cachy => pookie::cachy,
+            Browser::Chrome => pookie::chrome,
+            Browser::Chromium => pookie::chromium,
+            Browser::Edge => pookie::edge,
+            Browser::Firefox => pookie::firefox,
             #[cfg(target_os = "windows")]
-            Browser::InternetExplorer => rookie::internet_explorer,
-            Browser::LibreWolf => rookie::librewolf,
-            Browser::Opera => rookie::opera,
-            Browser::OperaGX => rookie::opera_gx,
+            Browser::InternetExplorer => pookie::internet_explorer,
+            Browser::LibreWolf => pookie::librewolf,
+            #[cfg(target_os = "windows")]
+            Browser::Octo => pookie::octo_browser,
+            Browser::Opera => pookie::opera,
+            Browser::OperaGX => pookie::opera_gx,
             #[cfg(target_os = "macos")]
-            Browser::Safari => rookie::safari,
-            Browser::Vivaldi => rookie::vivaldi,
+            Browser::Safari => pookie::safari,
+            Browser::Vivaldi => pookie::vivaldi,
+            Browser::Zen => pookie::zen,
         };
 
-        let domains = Some(vec![COOKIE_DOMAIN]);
-        let cookies = get_cookies(domains)?;
+        let domains = Some(vec![String::from(COOKIE_DOMAIN)]);
+        let cookies = get_cookies(domains).map_err(Error::msg)?;
         let cookie = cookies
             .into_iter()
             .filter(|cookie| cookie.name == COOKIE_NAME)
